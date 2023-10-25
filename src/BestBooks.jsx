@@ -26,14 +26,11 @@ class BestBooks extends React.Component {
   }
 
   render() {
-
-   
-
     return (
       <>
         <h2>My Essential Lifelong Learning &amp; Formation Shelf</h2>
 
-        {this.state.books.length ? (
+        {this.state.books.length > 0 ? (
            <Carousel>
            {this.state.books.map((books, idx) =>
            <Carousel.Item key={idx}>
