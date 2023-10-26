@@ -8,61 +8,141 @@ class BestBooks extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      books: []
-    }
+      books: [],
+      isModalOpen: false, // Track whether the modal is open
+      newBook: {
+        title: '',
+        description: '',
+        status: '',
+      },
+    };
   }
- /* code from github class 12 code review */
- fetchAllBooks = () => {
-  console.log('reaching to server')
-  axios.get(`${PORT}/books`)
-    .then(response => {
-      this.setState({ books: response.data });
-      console.log(response.data)
-    });
-}
+
+  fetchAllBooks = () => {
+    axios.get(`${PORT}/books`)
+      .then(response => {
+        this.setState({ books: response.data });
+      });
+  }
 
   componentDidMount() {
     this.fetchAllBooks();
   }
 
+  // Function to handle form input changes
+  handleInputChange = (event) => {
+    const { name, value } = event.target;
+    this.setState((prevState) => ({
+      newBook: { ...prevState.newBook, [name]: value },
+    }));
+  }
+
+  // Function to open the "New Book" form modal
+  openModal = () => {
+    this.setState({ isModalOpen: true });
+  }
+
+  // Function to close the "New Book" form modal
+  closeModal = () => {
+    this.setState({ isModalOpen: false });
+  }
+
+  // Function to handle form submission
+  handleSubmit = (event) => {
+    event.preventDefault();
+    axios.post(`${PORT}/books`, this.state.newBook)
+      .then(response => {
+        // Update the application state with the new book
+        this.setState((prevState) => ({
+          books: [...prevState.books, response.data],
+          newBook: {
+            title: '',
+            description: '',
+            status: '',
+          },
+          isModalOpen: false, // Close the modal after creating the book
+        }));
+      })
+      .catch(error => {
+        console.error('Error creating a new book', error);
+        // Handle errors here
+      });
+  }
+
+  handleDeleteBook = (bookId) => {
+    axios.delete(`${PORT}/books/${bookId}`)
+      .then(response => {
+        if (response.status === 200) {
+          // Remove the book from state
+          this.setState(prevState => ({
+            books: prevState.books.filter(book => book._id !== bookId),
+          }));
+        }
+      })
+      .catch(error => {
+        console.error(`Error deleting the book with ID ${bookId}:`, error);
+      });
+  }
+
   render() {
-
-   
-
     return (
       <>
-        <h2>My Essential Lifelong Learning &amp; Formation Shelf</h2>
+        <h2>My Essential Lifelong Learning & Formation Shelf</h2>
 
-        {this.state.books.length ? (
-           <Carousel>
-           {this.state.books.map((books, idx) =>
-           <Carousel.Item key={idx}>
-                   <img
-                     className="d-block w-100"
-                     src="https://media.discordapp.net/attachments/1136025197523259402/1145868153285525514/arkuris42069_a_bookshelf_drawn_in_a_realistic_depiction_bcf85a72-12e1-4da1-bc7c-0aa73e44f912.png?width=889&height=889"
-                     alt="First slide"
-                   />
-             <Carousel.Caption>
-               <h3>
-                 {books.title}
-               </h3>
-               <p>
-                 {books.description}
-               </p>
-               <p>
-                 Availible? {books.status}
-               </p>
-             </Carousel.Caption>
-           </Carousel.Item>)
-           }
-     </Carousel>
-) : (
- <h3>No Books Found :</h3>
-)}
+        {this.state.books.length > 0 ? (
+          <Carousel>
+            {this.state.books.map((book, idx) =>
+              <Carousel.Item key={idx}>
+                {/* Carousel content */}
+              </Carousel.Item>
+            )}
+          </Carousel>
+        ) : (
+          <h3>No Books Found</h3>
+        )}
 
-</>
-)
-}
+        {/* "Add Book" button */}
+        <button onClick={this.openModal}>Add Book</button>
+
+        {/* "New Book" form modal */}
+        {this.state.isModalOpen && (
+          <div className="modal">
+            <form onSubmit={this.handleSubmit}>
+              <label>
+                Title:
+                <input
+                  type="text"
+                  name="title"
+                  value={this.state.newBook.title}
+                  onChange={this.handleInputChange}
+                />
+              </label>
+              <label>
+                Description:
+                <input
+                  type="text"
+                  name="description"
+                  value={this.state.newBook.description}
+                  onChange={this.handleInputChange}
+                />
+              </label>
+              <label>
+                Status:
+                <input
+                  type="text"
+                  name="status"
+                  value={this.state.newBook.status}
+                  onChange={this.handleInputChange}
+                />
+              </label>
+              <button type="submit">Create Book</button>
+              <button onClick={this.closeModal}>Close</button>
+            </form>
+          </div>
+        )}
+      </>
+    );
+  }
 }
 
 export default BestBooks;
