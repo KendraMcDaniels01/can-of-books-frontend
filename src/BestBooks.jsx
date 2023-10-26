@@ -47,6 +47,38 @@ class BestBooks extends React.Component {
     this.setState({ isModalOpen: false });
   }
 
+  openEditModal = (book) => {
+    this.setState({ isModalOpen: true, editBook: book });
+  }
+
+  // Function to handle form submission for editing
+  handleEdit = (event) => {
+    event.preventDefault();
+    const { title, description, status } = this.state.newBook;
+    const bookId = this.state.editBook._id;
+
+    axios.put(`${PORT}/books/${bookId}`, { title, description, status })
+      .then(response => {
+        // Update the application state with the updated book
+        this.setState((prevState) => ({
+          books: prevState.books.map(book =>
+            book._id === response.data._id ? response.data : book
+          ),
+          newBook: {
+            title: '',
+            description: '',
+            status: '',
+          },
+          isModalOpen: false, // Close the modal after editing the book
+          editBook: null, // Clear the book being edited
+        }));
+      })
+      .catch(error => {
+        console.error(`Error editing the book with ID ${bookId}:`, error);
+        // Handle errors here
+      });
+  }
+
   // Function to handle form submission
   handleSubmit = (event) => {
     event.preventDefault();
@@ -84,16 +116,18 @@ class BestBooks extends React.Component {
       });
   }
 
-  render() {
+render() {
     return (
       <>
         <h2>My Essential Lifelong Learning & Formation Shelf</h2>
 
+        {/* Books list with Edit buttons */}
         {this.state.books.length > 0 ? (
           <Carousel>
             {this.state.books.map((book, idx) =>
               <Carousel.Item key={idx}>
-                {/* Carousel content */}
+                {/* Book content */}
+                <button onClick={() => this.openEditModal(book)}>Edit</button>
               </Carousel.Item>
             )}
           </Carousel>
@@ -104,16 +138,16 @@ class BestBooks extends React.Component {
         {/* "Add Book" button */}
         <button onClick={this.openModal}>Add Book</button>
 
-        {/* "New Book" form modal */}
+        {/* "New Book" or "Edit Book" form modal */}
         {this.state.isModalOpen && (
           <div className="modal">
-            <form onSubmit={this.handleSubmit}>
+            <form onSubmit={this.state.editBook ? this.handleEdit : this.handleSubmit}>
               <label>
                 Title:
                 <input
                   type="text"
                   name="title"
-                  value={this.state.newBook.title}
+                  value={this.state.editBook ? this.state.newBook.title : this.state.newBook.title}
                   onChange={this.handleInputChange}
                 />
               </label>
@@ -122,7 +156,7 @@ class BestBooks extends React.Component {
                 <input
                   type="text"
                   name="description"
-                  value={this.state.newBook.description}
+                  value={this.state.editBook ? this.state.newBook.description : this.state.newBook.description}
                   onChange={this.handleInputChange}
                 />
               </label>
@@ -131,11 +165,13 @@ class BestBooks extends React.Component {
                 <input
                   type="text"
                   name="status"
-                  value={this.state.newBook.status}
+                  value={this.state.editBook ? this.state.newBook.status : this.state.newBook.status}
                   onChange={this.handleInputChange}
                 />
               </label>
-              <button type="submit">Create Book</button>
+              <button type="submit">
+                {this.state.editBook ? 'Update Book' : 'Create Book'}
+              </button>
               <button onClick={this.closeModal}>Close</button>
             </form>
           </div>
